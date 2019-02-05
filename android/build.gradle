@@ -6,6 +6,9 @@ buildscript {
       url 'https://maven.google.com/'
       name 'Google'
     }
+    flatDir {
+      dirs 'dep'
+    }
   }
 
   dependencies {
@@ -47,4 +50,5 @@ repositories {
 dependencies {
   implementation 'com.facebook.react:react-native:+'
   implementation 'com.android.billingclient:billing:1.1'
+  compile 'in-app-purchasing-2.0.76.jar'
 }
