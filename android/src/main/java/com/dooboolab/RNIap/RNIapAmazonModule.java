@@ -20,41 +20,95 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
 
+import java.util.HashMap;
+import java.util.Set;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.omg.PortableInterceptor.SUCCESSFUL;
+
 import com.amazon.device.iap.PurchasingService;
 import com.amazon.device.iap.PurchasingListener;
 
 import com.amazon.device.iap.model.Product;
+import com.amazon.device.iap.model.ProductType;
 import com.amazon.device.iap.model.ProductDataResponse;
 import com.amazon.device.iap.model.PurchaseUpdatesResponse;
 import com.amazon.device.iap.model.Receipt;
 import com.amazon.device.iap.model.RequestId;
 import com.amazon.device.iap.model.UserData;
 import com.amazon.device.iap.model.UserDataResponse;
+import com.amazon.device.iap.model.FulfillmentResult;
 
 public class RNIapAmazonModule extends ReactContextBaseJavaModule {
   final String TAG = "RNIapAmazonModule";
 
-  private PurchasingListener purchasingListener = new PurchasingListener() {
-    @Override
-    public void onUserDataResponse(UserDataResponse userDataResponse) {
-      Log.d(TAG, "oudr=" + userDataResponse.toString());
-    }
+  // Constants for api operations
+  private static final String GET_PRODUCT_DATA = "GET_PRODUCT_DATA";
+  private static final String GET_PURCHASE_UPDATES = "GET_PURCHASE_UPDATES";
+  private static final String GET_USER_DATA = "GET_USER_DATA";
+  private static final String PURCHASE_ITEM = "PURCHASE_ITEM";
 
-    @Override
-    public void onProductDataResponse(ProductDataResponse response) {
-      Log.d(TAG, "opdr=" + response.toString());
+  // Promises: passed in from React layer. Resolved / rejected depending on response in listener
+  private HashMap<String, ArrayList<Promise>> promises = new HashMap<>();
+
+  public RNIapAmazonModule (ReactApplicationContext reactContext) {
+    super(reactContext);
+    registerListener(reactContext);
+  }
+
+  private void registerListener(Context context) {
+    PurchasingService.registerListener(context, purchasingListener);
+  }
+
+  // Primary methods for fetching data from Amazon
+  // The set of skus must be <= 100
+  @ReactMethod
+  public RequestId getProductData(Set skus, Promise promise) {
+    savePromise(GET_PRODUCT_DATA, promise);
+    RequestId requestId = PurchasingService.getProductData(skus);
+    return requestId;
+  }
+
+  @ReactMethod
+  public RequestId getPurchaseUpdates(boolean reset, Promise promise) {
+    savePromise(GET_PURCHASE_UPDATES, promise);
+    RequestId requestId = PurchasingService.getPurchaseUpdates(reset);
+    return requestId;
+  }
+
+  @ReactMethod 
+  public RequestId getUserData(Promise promise) {
+    savePromise(GET_USER_DATA, promise);
+    RequestId requestId = PurchasingService.getUserData();
+    return requestId;
+  }
+
+  @ReactMethod
+  public void notifyFulfillment(String receiptId, FulfillmentResult result) {
+    Log.d("Notifying Amazon on fulfillment of " + receiptId + " with result " + result);
+    PurchasingService.notifyFulfillment(receiptId, result);
+  }
+
+  @ReactMethod
+  public RequestId purchase(String sku, Promise promise) {
+    savePromise(PURCHASE_ITEM, promise);
+    RequestId requestId = PurchasingService.purchase(sku);
+    return requestId;
+  }
+
+  private PurchasingListener purchasingListener = new PurchasingListener() {
+    public void onProductDataResponse(ProductDataResponse productDataResponse) {
+      final String localTag = "onProductDataResponse";
+      Log.d(TAG + " onProductDataResponse: " + productDataResponse.toString());
       final ProductDataResponse.RequestStatus status = response.getRequestStatus();
-      Log.d(TAG, "onProductDataResponse status: " + status );
+      Log.d(localTag + " status: " + status);
 
       switch (status) {
-        case SUCCESSFUL:
-          Log.d(TAG, "onProductDataResponse: successful.  The item data map in this response includes the valid SKUs");
-
+        case SUCCESSFUL: 
           final Map<String, Product> productData = response.getProductData();
-
           final Set<String> unavailableSkus = response.getUnavailableSkus();
-          Log.d(TAG, "onProductDataResponse: " + unavailableSkus.size() + " unavailable skus");
-          Log.d(TAG, "unavailableSkus: " + unavailableSkus.toString());
           JSONArray items = new JSONArray();
           try {
             for (Map.Entry<String, Product> skuDetails : productData.entrySet()) {
@@ -90,33 +144,33 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
               item.put("freeTrialPeriodAndroid", "");
               item.put("introductoryPriceCyclesAndroid", "");
               item.put("introductoryPricePeriodAndroid", "");
-              Log.d(TAG, "opdr Putting "+item.toString());
+              Log.d(localTag + " Adding item to items list: " + item.toString());
               items.put(item);
             }
-            //System.err.println("Sending "+items.toString());
-            result.success(items.toString());
-          } catch (JSONException e) {
-            result.error(TAG, "E_BILLING_RESPONSE_JSON_PARSE_ERROR", e.getMessage());
+            resolvePromises(GET_PRODUCT_DATA, items);
+          } catch (Exception e) { 
+            rejectPromises(GET_PRODUCT_DATA, "JSON_PARSE_ERROR IN " + localTag, null, null);
           }
           break;
-        case FAILED:
-          result.error(TAG,"FAILED",null);
-        case NOT_SUPPORTED:
-          Log.d(TAG, "onProductDataResponse: failed, should retry request");
-          result.error(TAG,"NOT_SUPPORTED",null);
+        case FAILED: 
+          rejectPromises(GET_PRODUCT_DATA, "RESPONSE FAILURE IN " + localTag, e.getMessage(), e);
+          break;
+        case NOT_SUPPORTED: 
+        rejectPromises(GET_PRODUCT_DATA, "OPERATION NOT SUPPORTED IN " + localTag, null, null);
           break;
       }
     }
 
-    // buyItemByType
-    @Override
-    public void onPurchaseResponse(PurchaseResponse response) {
-      Log.d(TAG, "opr="+response.toString());
+    public void onPurchaseRespone(PurchaseResponse purchaseResponse) {
+      final String localTag = "onPurchaseResponse";
       final PurchaseResponse.RequestStatus status = response.getRequestStatus();
-      switch(status) {
-        case SUCCESSFUL:
+      Log.d(localTag + " response status: " + status);
+      switch (status) {
+        case SUCCESSFUL: 
           Receipt receipt = response.getReceipt();
-          PurchasingService.notifyFulfillment(receipt.getReceiptId(), FulfillmentResult.FULFILLED);
+          // NOTE: In many cases, you would want to notifyFullfilment here. I've left this out in case of 
+          // any need to handle things in the UI / React layer prior to notifying fullfilment. The function remains
+          // Available as a React Function and can be called at any time 
           Date date = receipt.getPurchaseDate();
           Long transactionDate=date.getTime();
           try {
@@ -124,53 +178,100 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
                   receipt.getReceiptId(),
                   receipt.getReceiptId(),
                   transactionDate.doubleValue());
-            Log.d(TAG, "opr Putting "+item.toString());
-            result.success(item.toString());
+            Log.d(localTag + " returning JSON obj: " + item.toString());
+            resolvePromises(PURCHASE_ITEM, item);
           } catch (JSONException e) {
-            result.error(TAG, "E_BILLING_RESPONSE_JSON_PARSE_ERROR", e.getMessage());
+            rejectPromises(PURCHASE_ITEM, "JSON_PARSE_ERROR_ON_BILLING_RESPONSE", e.getMessage(), e);
           }
           break;
-        case FAILED:
-          result.error(TAG, "buyItemByType", "billingResponse is not ok: " + status);
+        case FAILED: 
+          rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE", null, status);
           break;
       }
     }
 
-    // getAvailableItemsByType
-    @Override
-    public void onPurchaseUpdatesResponse(PurchaseUpdatesResponse response) {
-      Log.d(TAG, "opudr="+response.toString());
+    public void onPurchaseUpdatesResponse(PurchaseUpdatesResponse purchaseUpdatesResponse) {
+      final String localTag = "onPurchaseUpdatesResponse";
       final PurchaseUpdatesResponse.RequestStatus status = response.getRequestStatus();
 
-      switch(status) {
+      switch (status) {
         case SUCCESSFUL:
           JSONArray items = new JSONArray();
           try {
             List<Receipt> receipts = response.getReceipts();
             for(Receipt receipt : receipts) {
               Date date = receipt.getPurchaseDate();
-              Long transactionDate=date.getTime();
+              Long transactionDate = date.getTime();
               JSONObject item = getPurchaseData(receipt.getSku(),
                       receipt.getReceiptId(),
                       receipt.getReceiptId(),
                       transactionDate.doubleValue());
 
-              Log.d(TAG, "opudr Putting "+item.toString());
+              Log.d(localTag +  " adding item: " + item.toString());
               items.put(item);
             }
-            result.success(items.toString());
+            resolvePromises(GET_PURCHASE_UPDATES, items);
           } catch (JSONException e) {
-            result.error(TAG, "E_BILLING_RESPONSE_JSON_PARSE_ERROR", e.getMessage());
+            rejectPromises(GET_PURCHASE_UPDATES, "BILLING_RESPONSE_JSON_PARSE_ERROR", e.getMessage(), e);
           }
           break;
         case FAILED:
-          result.error(TAG,"FAILED",null);
+          rejectPromises(GET_PURCHASE_UPDATES, "FAILED IN: " + localTag, null, null);
           break;
         case NOT_SUPPORTED:
           Log.d(TAG, "onPurchaseUpdatesResponse: failed, should retry request");
-          result.error(TAG,"NOT_SUPPORTED",null);
+          rejectPromises(GET_PURCHASE_UPDATES, localTag + " NOT_SUPPORTED", "Should retry requesst", null);
           break;
       }
+    } 
+
+    public void onUserDataResponse(UserDataResponse userDataResponse) {
+      Log.d(TAG + " onUserDataResponse: " + userDataResponse.toString());
     }
   };
+
+  private JSONObject getPurchaseData(String productId, String receiptId,
+                             Double transactionDate) throws JSONException {
+    JSONObject item = new JSONObject();
+    item.put("productId", productId);
+    item.put("receiptId", receiptId);
+    item.put("transactionDate", Double.toString(transactionDate));
+    item.put("dataAndroid",null);
+    item.put("signatureAndroid",null);
+    item.put("purchaseToken",null);
+    return item;
+  }
+
+  private void savePromise(String key, Promise promise) {
+    ArrayList<Promise> list;
+    if (promises.containsKey(key)) {
+      list = promises.get(key);
+    }
+    else {
+      list = new ArrayList<Promise>();
+      promises.put(key, list);
+    }
+
+    list.add(promise);
+  }
+
+  private void resolvePromises(String key, Object value) {
+    if (promises.containsKey(key)) {
+      ArrayList<Promise> list = promises.get(key);
+      for (Promise promise : list) {
+        promise.resolve(value);
+      }
+      promises.remove(key);
+    }
+  }
+
+  private void rejectPromises(String key, String code, String message, Exception err) {
+    if (promises.containsKey(key)) {
+      ArrayList<Promise> list = promises.get(key);
+      for (Promise promise : list) {
+        promise.reject(code, message, err);
+      }
+      promises.remove(key);
+    }
+  }
 }
