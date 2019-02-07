@@ -1,7 +1,7 @@
 
 import { NativeModules, Platform, NativeEventEmitter } from 'react-native';
 
-const { RNIapIos, RNIapModule } = NativeModules;
+const { RNIapIos, RNIapModule, RNIapAmazonModule } = NativeModules;
 
 const ANDROID_ITEM_TYPE_SUBSCRIPTION = 'subs';
 const ANDROID_ITEM_TYPE_IAP = 'inapp';
@@ -207,6 +207,11 @@ export const buyPromotedProduct = () => Platform.select({
   android: async() => Promise.resolve(),
 })();
 
+export const purchase = (sku) => Platform.select({
+  ios: async() => Promise.resolve(),
+  android: async() => RNIapAmazonModule.purchase(sku),
+})();
+
 /**
  * Validate receipt for iOS.
  * @param {object} receiptBody the receipt body to send to apple server.
@@ -320,6 +325,7 @@ export default {
   finishTransaction,
   clearTransaction,
   consumePurchase,
+  purchase,
   validateReceiptIos,
   validateReceiptAndroid,
   addAdditionalSuccessPurchaseListenerIOS,

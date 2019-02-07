@@ -22,11 +22,16 @@ import com.facebook.react.bridge.Promise;
 
 import java.util.HashMap;
 import java.util.Set;
+import java.util.Map;
+import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.text.NumberFormat;
+import java.text.ParseException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.omg.PortableInterceptor.SUCCESSFUL;
 
 import com.amazon.device.iap.PurchasingService;
 import com.amazon.device.iap.PurchasingListener;
@@ -35,6 +40,7 @@ import com.amazon.device.iap.model.Product;
 import com.amazon.device.iap.model.ProductType;
 import com.amazon.device.iap.model.ProductDataResponse;
 import com.amazon.device.iap.model.PurchaseUpdatesResponse;
+import com.amazon.device.iap.model.PurchaseResponse;
 import com.amazon.device.iap.model.Receipt;
 import com.amazon.device.iap.model.RequestId;
 import com.amazon.device.iap.model.UserData;
@@ -52,6 +58,12 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
 
   // Promises: passed in from React layer. Resolved / rejected depending on response in listener
   private HashMap<String, ArrayList<Promise>> promises = new HashMap<>();
+
+  
+  @Override
+  public String getName() {
+    return TAG;
+  }
 
   public RNIapAmazonModule (ReactApplicationContext reactContext) {
     super(reactContext);
@@ -87,7 +99,7 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void notifyFulfillment(String receiptId, FulfillmentResult result) {
-    Log.d("Notifying Amazon on fulfillment of " + receiptId + " with result " + result);
+    Log.d(TAG, "Notifying Amazon on fulfillment of " + receiptId + " with result " + result);
     PurchasingService.notifyFulfillment(receiptId, result);
   }
 
@@ -101,14 +113,14 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
   private PurchasingListener purchasingListener = new PurchasingListener() {
     public void onProductDataResponse(ProductDataResponse productDataResponse) {
       final String localTag = "onProductDataResponse";
-      Log.d(TAG + " onProductDataResponse: " + productDataResponse.toString());
-      final ProductDataResponse.RequestStatus status = response.getRequestStatus();
-      Log.d(localTag + " status: " + status);
+      Log.d(TAG, " onProductDataResponse: " + productDataResponse.toString());
+      final ProductDataResponse.RequestStatus status = productDataResponse.getRequestStatus();
+      Log.d(TAG, "Status: " + status);
 
       switch (status) {
         case SUCCESSFUL: 
-          final Map<String, Product> productData = response.getProductData();
-          final Set<String> unavailableSkus = response.getUnavailableSkus();
+          final Map<String, Product> productData = productDataResponse.getProductData();
+          final Set<String> unavailableSkus = productDataResponse.getUnavailableSkus();
           JSONArray items = new JSONArray();
           try {
             for (Map.Entry<String, Product> skuDetails : productData.entrySet()) {
@@ -119,7 +131,7 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
               try {
                 number = format.parse(product.getPrice());
               } catch (ParseException e) {
-                result.error(TAG, "Price Parsing error", e.getMessage());
+                rejectPromises(GET_PRODUCT_DATA, "Pricing Parsing error in: " + localTag, e.getMessage(), e);
                 return;
               }
               JSONObject item = new JSONObject();
@@ -144,16 +156,16 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
               item.put("freeTrialPeriodAndroid", "");
               item.put("introductoryPriceCyclesAndroid", "");
               item.put("introductoryPricePeriodAndroid", "");
-              Log.d(localTag + " Adding item to items list: " + item.toString());
+              Log.d(TAG, "Adding item to items list: " + item.toString());
               items.put(item);
             }
             resolvePromises(GET_PRODUCT_DATA, items);
           } catch (Exception e) { 
-            rejectPromises(GET_PRODUCT_DATA, "JSON_PARSE_ERROR IN " + localTag, null, null);
+            rejectPromises(GET_PRODUCT_DATA, "JSON_PARSE_ERROR IN " + localTag, e.getMessage(), e);
           }
           break;
         case FAILED: 
-          rejectPromises(GET_PRODUCT_DATA, "RESPONSE FAILURE IN " + localTag, e.getMessage(), e);
+          rejectPromises(GET_PRODUCT_DATA, "RESPONSE FAILURE IN " + localTag, null, null);
           break;
         case NOT_SUPPORTED: 
         rejectPromises(GET_PRODUCT_DATA, "OPERATION NOT SUPPORTED IN " + localTag, null, null);
@@ -161,13 +173,13 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
       }
     }
 
-    public void onPurchaseRespone(PurchaseResponse purchaseResponse) {
+    public void onPurchaseResponse(PurchaseResponse purchaseResponse) {
       final String localTag = "onPurchaseResponse";
-      final PurchaseResponse.RequestStatus status = response.getRequestStatus();
-      Log.d(localTag + " response status: " + status);
+      final PurchaseResponse.RequestStatus status = purchaseResponse.getRequestStatus();
+      Log.d(TAG, "Response status: " + status);
       switch (status) {
         case SUCCESSFUL: 
-          Receipt receipt = response.getReceipt();
+          Receipt receipt = purchaseResponse.getReceipt();
           // NOTE: In many cases, you would want to notifyFullfilment here. I've left this out in case of 
           // any need to handle things in the UI / React layer prior to notifying fullfilment. The function remains
           // Available as a React Function and can be called at any time 
@@ -176,38 +188,36 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
           try {
             JSONObject item = getPurchaseData(receipt.getSku(),
                   receipt.getReceiptId(),
-                  receipt.getReceiptId(),
                   transactionDate.doubleValue());
-            Log.d(localTag + " returning JSON obj: " + item.toString());
+            Log.d(TAG, "Returning JSON obj: " + item.toString());
             resolvePromises(PURCHASE_ITEM, item);
           } catch (JSONException e) {
             rejectPromises(PURCHASE_ITEM, "JSON_PARSE_ERROR_ON_BILLING_RESPONSE", e.getMessage(), e);
           }
           break;
         case FAILED: 
-          rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE", null, status);
+          rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE", null, null);
           break;
       }
     }
 
     public void onPurchaseUpdatesResponse(PurchaseUpdatesResponse purchaseUpdatesResponse) {
       final String localTag = "onPurchaseUpdatesResponse";
-      final PurchaseUpdatesResponse.RequestStatus status = response.getRequestStatus();
+      final PurchaseUpdatesResponse.RequestStatus status = purchaseUpdatesResponse.getRequestStatus();
 
       switch (status) {
         case SUCCESSFUL:
           JSONArray items = new JSONArray();
           try {
-            List<Receipt> receipts = response.getReceipts();
+            List<Receipt> receipts = purchaseUpdatesResponse.getReceipts();
             for(Receipt receipt : receipts) {
               Date date = receipt.getPurchaseDate();
               Long transactionDate = date.getTime();
               JSONObject item = getPurchaseData(receipt.getSku(),
                       receipt.getReceiptId(),
-                      receipt.getReceiptId(),
                       transactionDate.doubleValue());
 
-              Log.d(localTag +  " adding item: " + item.toString());
+              Log.d(TAG, "Adding item: " + item.toString());
               items.put(item);
             }
             resolvePromises(GET_PURCHASE_UPDATES, items);
@@ -226,7 +236,7 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
     } 
 
     public void onUserDataResponse(UserDataResponse userDataResponse) {
-      Log.d(TAG + " onUserDataResponse: " + userDataResponse.toString());
+      Log.d(TAG, "onUserDataResponse: " + userDataResponse.toString());
     }
   };
 
