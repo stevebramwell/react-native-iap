@@ -230,12 +230,29 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
           break;
         case NOT_SUPPORTED:
           Log.d(TAG, "onPurchaseUpdatesResponse: failed, should retry request");
-          rejectPromises(GET_PURCHASE_UPDATES, localTag + " NOT_SUPPORTED", "Should retry requesst", null);
+          rejectPromises(GET_PURCHASE_UPDATES, localTag + " NOT_SUPPORTED", "Should retry request", null);
           break;
       }
     } 
 
     public void onUserDataResponse(UserDataResponse userDataResponse) {
+      final String localTag = "onUserDataResponse";
+      final UserDataResponse.RequestStatus status = userDataResponse.getRequestStatus();
+
+      switch (status) {
+        case SUCCESSFUL:
+          JSONObject userData = userDataResponse.toJSON();
+          resolvePromises(GET_USER_DATA, userData);
+          break;
+        case FAILED:
+          Log.d(TAG, "onPurchaseUpdatesResponse: failed, should retry request");
+          rejectPromises(GET_USER_DATA, "FAILED IN: " + localTag, null, null);
+          break;
+        case NOT_SUPPORTED:
+          rejectPromises(GET_PURCHASE_UPDATES, localTag + " NOT_SUPPORTED", "Should retry request", null);
+          break;
+      }
+
       Log.d(TAG, "onUserDataResponse: " + userDataResponse.toString());
     }
   };
