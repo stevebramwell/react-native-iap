@@ -356,6 +356,11 @@ export const checkIsAmazonDevice = async() => {
   return isAmazonDevice;
 }
 
+export const getUserInfo = async() => {
+  let userInfo = await RNIapAmazonModule.getUserInfo();
+  return userInfo;
+}
+
 /**
  * deprecated codes
  */

@@ -241,8 +241,14 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
 
       switch (status) {
         case SUCCESSFUL:
-          JSONObject userData = userDataResponse.toJSON();
-          resolvePromises(GET_USER_DATA, userData);
+          try {
+            JSONObject userData = new JSONObject();
+            userData.put("marketplace", userDataResponse.getUserData().getMarketplace());
+            userData.put("userId", userDataResponse.getUserData().getUserId())
+            resolvePromises(GET_USER_DATA, userData);
+          } catch (JSONException e) {
+            rejectPromises(GET_USER_DATA, "USER_DATA_RESPONSE_JSON_PARSE_ERROR", e.getMessage(), e);
+          }
           break;
         case FAILED:
           Log.d(TAG, "onPurchaseUpdatesResponse: failed, should retry request");
