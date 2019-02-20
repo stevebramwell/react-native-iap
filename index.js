@@ -347,6 +347,7 @@ export const addAdditionalSuccessPurchaseListenerIOS = (e) => {
  * @returns {null}
  */
 export const notifyFulfillmentAmazon = async(receiptId, fulfillmentResult) => {
+  console.log('notifying fulfillment');
   RNIapAmazonModule.notifyFulfillment(receiptId, fulfillmentResult);
 }
 
@@ -356,8 +357,10 @@ export const checkIsAmazonDevice = async() => {
   return isAmazonDevice;
 }
 
-export const getUserInfo = async() => {
-  let userInfo = await RNIapAmazonModule.getUserInfo();
+export const getUserData = async() => {
+  console.log('hit getUserData');
+  let userInfo = JSON.parse(await RNIapAmazonModule.getUserData());
+  console.log('user data returning from index.js of IAP module');
   return userInfo;
 }
 
@@ -403,6 +406,7 @@ export default {
   getSubscriptions,
   getPurchaseHistory,
   getAvailablePurchases,
+  getUserData,
   consumeAllItems,
   buySubscription,
   buyProduct,

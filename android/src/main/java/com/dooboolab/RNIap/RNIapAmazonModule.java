@@ -19,6 +19,9 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.Arguments;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -92,6 +95,9 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
 
   @ReactMethod 
   public RequestId getUserData(Promise promise) {
+    Log.d(TAG, "Within getUserData java method");
+    //System.out.println("Promise: " + promise);
+    Log.d(TAG, "Promise: " + promise);
     savePromise(GET_USER_DATA, promise);
     RequestId requestId = PurchasingService.getUserData();
     return requestId;
@@ -121,10 +127,11 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
         case SUCCESSFUL: 
           final Map<String, Product> productData = productDataResponse.getProductData();
           final Set<String> unavailableSkus = productDataResponse.getUnavailableSkus();
-          JSONArray items = new JSONArray();
+          WritableArray maps = Arguments.createArray();
           try {
             for (Map.Entry<String, Product> skuDetails : productData.entrySet()) {
-              Product product=skuDetails.getValue();
+              Product product = skuDetails.getValue();
+              ProductType productType = product.getProductType();
               NumberFormat format = NumberFormat.getCurrencyInstance();
 
               Number number;
@@ -134,34 +141,36 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
                 rejectPromises(GET_PRODUCT_DATA, "Pricing Parsing error in: " + localTag, e.getMessage(), e);
                 return;
               }
-              JSONObject item = new JSONObject();
-              item.put("productId", product.getSku());
-              item.put("price", number.toString());
-              item.put("currency", null);
-              ProductType productType = product.getProductType();
+              WritableMap map = Arguments.createMap();
+
+              //JSONObject item = new JSONObject();
+              map.putString("productId", product.getSku());
+              map.putString("price", number.toString());
+              map.putNull("currency");
+              
               switch (productType) {
                 case ENTITLED:
                 case CONSUMABLE:
-                  item.put("type", "inapp");
+                  map.putString("type", "inapp");
                   break;
                 case SUBSCRIPTION:
-                  item.put("type", "subs");
+                  map.putString("type", "subs");
                   break;
               }
-              item.put("localizedPrice", product.getPrice());
-              item.put("title", product.getTitle());
-              item.put("description", product.getDescription());
-              item.put("introductoryPrice", "");
-              item.put("subscriptionPeriodAndroid", "");
-              item.put("freeTrialPeriodAndroid", "");
-              item.put("introductoryPriceCyclesAndroid", "");
-              item.put("introductoryPricePeriodAndroid", "");
-              Log.d(TAG, "Adding item to items list: " + item.toString());
-              items.put(item);
+              map.putString("localizedPrice", product.getPrice());
+              map.putString("title", product.getTitle());
+              map.putString("description", product.getDescription());
+              map.putNull("introductoryPrice");
+              map.putNull("subscriptionPeriodAndroid");
+              map.putNull("freeTrialPeriodAndroid");
+              map.putNull("introductoryPriceCyclesAndroid");
+              map.putNull("introductoryPricePeriodAndroid");
+              // Log.d(TAG, "Adding item to items list: " + map.toString());
+              maps.pushMap(map);
             }
-            resolvePromises(GET_PRODUCT_DATA, items);
+            resolvePromises(GET_PRODUCT_DATA, maps);
           } catch (Exception e) { 
-            rejectPromises(GET_PRODUCT_DATA, "JSON_PARSE_ERROR IN " + localTag, e.getMessage(), e);
+            rejectPromises(GET_PRODUCT_DATA, "PARSE_ERROR IN " + localTag, e.getMessage(), e);
           }
           break;
         case FAILED: 
@@ -186,12 +195,11 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
           Date date = receipt.getPurchaseDate();
           Long transactionDate=date.getTime();
           try {
-            JSONObject item = getPurchaseData(receipt.getSku(),
+            WritableMap map = getPurchaseData(receipt.getSku(),
                   receipt.getReceiptId(),
                   transactionDate.doubleValue());
-            Log.d(TAG, "Returning JSON obj: " + item.toString());
-            resolvePromises(PURCHASE_ITEM, item);
-          } catch (JSONException e) {
+            resolvePromises(PURCHASE_ITEM, map);
+          } catch (Exception e) {
             rejectPromises(PURCHASE_ITEM, "JSON_PARSE_ERROR_ON_BILLING_RESPONSE", e.getMessage(), e);
           }
           break;
@@ -207,21 +215,21 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
 
       switch (status) {
         case SUCCESSFUL:
-          JSONArray items = new JSONArray();
+          WritableArray maps = Arguments.createArray();
           try {
             List<Receipt> receipts = purchaseUpdatesResponse.getReceipts();
             for(Receipt receipt : receipts) {
               Date date = receipt.getPurchaseDate();
               Long transactionDate = date.getTime();
-              JSONObject item = getPurchaseData(receipt.getSku(),
+              WritableMap map = getPurchaseData(receipt.getSku(),
                       receipt.getReceiptId(),
                       transactionDate.doubleValue());
 
-              Log.d(TAG, "Adding item: " + item.toString());
-              items.put(item);
+              //Log.d(TAG, "Adding item: " + map.toString());
+              maps.pushMap(map);
             }
-            resolvePromises(GET_PURCHASE_UPDATES, items);
-          } catch (JSONException e) {
+            resolvePromises(GET_PURCHASE_UPDATES, maps);
+          } catch (Exception e) {
             rejectPromises(GET_PURCHASE_UPDATES, "BILLING_RESPONSE_JSON_PARSE_ERROR", e.getMessage(), e);
           }
           break;
@@ -238,15 +246,18 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
     public void onUserDataResponse(UserDataResponse userDataResponse) {
       final String localTag = "onUserDataResponse";
       final UserDataResponse.RequestStatus status = userDataResponse.getRequestStatus();
-
       switch (status) {
         case SUCCESSFUL:
           try {
-            JSONObject userData = new JSONObject();
-            userData.put("marketplace", userDataResponse.getUserData().getMarketplace());
-            userData.put("userId", userDataResponse.getUserData().getUserId())
-            resolvePromises(GET_USER_DATA, userData);
-          } catch (JSONException e) {
+            UserData userData = userDataResponse.getUserData();
+
+            WritableMap map = Arguments.createMap();
+            map.putString("userId", userData.getUserId());
+            map.putString("marketplace", userData.getMarketplace());
+
+            resolvePromises(GET_USER_DATA, map);
+          } catch (Exception e) {
+            // TODO: If above works w/o error may not need the below catch block
             rejectPromises(GET_USER_DATA, "USER_DATA_RESPONSE_JSON_PARSE_ERROR", e.getMessage(), e);
           }
           break;
@@ -258,24 +269,23 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
           rejectPromises(GET_PURCHASE_UPDATES, localTag + " NOT_SUPPORTED", "Should retry request", null);
           break;
       }
-
-      Log.d(TAG, "onUserDataResponse: " + userDataResponse.toString());
     }
   };
 
-  private JSONObject getPurchaseData(String productId, String receiptId,
-                             Double transactionDate) throws JSONException {
-    JSONObject item = new JSONObject();
-    item.put("productId", productId);
-    item.put("receiptId", receiptId);
-    item.put("transactionDate", Double.toString(transactionDate));
-    item.put("dataAndroid",null);
-    item.put("signatureAndroid",null);
-    item.put("purchaseToken",null);
-    return item;
+  private WritableMap getPurchaseData(String productId, String receiptId,
+                             Double transactionDate) {
+    WritableMap map = Arguments.createMap();
+    map.putString("productId", productId);
+    map.putString("receiptId", receiptId);
+    map.putString("transactionDate", Double.toString(transactionDate));
+    map.putNull("dataAndroid");
+    map.putNull("signatureAndroid");
+    map.putNull("purchaseToken");
+    return map;
   }
 
   private void savePromise(String key, Promise promise) {
+    Log.d(TAG, "saving promise w/ key: " + key);
     ArrayList<Promise> list;
     if (promises.containsKey(key)) {
       list = promises.get(key);
@@ -289,6 +299,7 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
   }
 
   private void resolvePromises(String key, Object value) {
+    Log.d(TAG, "resolving promises: " + key + " " + value);
     if (promises.containsKey(key)) {
       ArrayList<Promise> list = promises.get(key);
       for (Promise promise : list) {
