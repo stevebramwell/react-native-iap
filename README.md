@@ -4,10 +4,11 @@
   <a href="https://npmjs.org/package/react-native-iap"><img src="http://img.shields.io/npm/dm/react-native-iap.svg?style=flat-square"></a>
   <a href="https://npmjs.org/package/react-native-iap"<><img src="https://img.shields.io/npm/l/react-native-iap.svg"></a>
 </p>
-This is a react-native link library project for in-app purchase for both android and ios platforms. The goal of this project is to have similar experience between the two platforms for in-app-purchase. Basically, android platform has more functions for in-app-purchase and is not our specific interests for this project.
 
-We are willing to share same in-app-purchase experience for both android and ios platform and will continuously merge methods which are standing alone.
-Android iap is implemented with iap version 3 which is currently recent.
+> This is a react-native link library project for in-app purchase for both android and ios platforms. The goal of this project is to have similar experience between the two platforms for in-app-purchase. Basically, android platform has more functions for in-app-purchase and is not our specific interests for this project. We are willing to share same in-app-purchase experience for both `android` and `ios`.
+
+> Checkout example code<br/>
+![wjl0ak0fgj](https://user-images.githubusercontent.com/27461460/52619625-87aa8a80-2ee5-11e9-9aee-6691c34408f3.gif)
 
 ## Playstore & Itunnesconnect configuration
   - Please refer to [Blog](https://medium.com/@dooboolab/react-native-in-app-purchase-121622d26b67).
@@ -36,7 +37,7 @@ From above method changes, `getProducts` gets `itemSkus` as parameter in differe
 ```
 const itemSkus = {
   ios: [
-	'point_1000',
+    'point_1000',
   ],
   android: [
     'point_1000',
@@ -47,7 +48,7 @@ But now you should do like below which will just pass single array instead of ob
 ```
 const itemSkus = Platform.select({
   ios: [
-	'point_1000',
+    'point_1000',
   ],
   android: [
     'point_1000',
@@ -61,8 +62,8 @@ Also, note that this is our last migration for renaming method names without any
 | :------------ |:---------------:| :---------------:| :-----|
 | prepare |  | `Promise<void>` | Deprecated. Use `initConnection` instead. |
 | initConnection |  | `Promise<string>` | Init IAP module. On Android this can be called to preload the connection to Play Services. In iOS, it will simply call `canMakePayments` method and return value.|
-| getProducts | `string[]` Product IDs/skus | `Promise<Product[]>` | Get a list of products (consumable and non-consumable items, but not subscriptions). Note: On iOS versions earlier than 11.2 this method _will_ return subscriptions if they are included in your list of SKUs. This is because we cannot differentiate between IAP products and subscriptions prior to 11.2. |
-| getSubscriptions | `string[]` Subscription IDs/skus | `Promise<Subscription[]>` | Get a list of subscriptions. Note: On iOS versions earlier than 11.2 this method _will_ return subscriptions if they are included in your list of SKUs. This is because we cannot differentiate between IAP products and subscriptions prior to 11.2. |
+| getProducts | `string[]` Product IDs/skus | `Promise<Product[]>` | Get a list of products (consumable and non-consumable items, but not subscriptions). Note: On iOS versions earlier than 11.2 this method _will_ also return subscriptions if they are included in your list of SKUs. This is because we cannot differentiate between IAP products and subscriptions prior to 11.2. |
+| getSubscriptions | `string[]` Subscription IDs/skus | `Promise<Subscription[]>` | Get a list of subscriptions. Note: On iOS versions earlier than 11.2 this method _will_ also return products if they are included in your list of SKUs. This is because we cannot differentiate between IAP products and subscriptions prior to 11.2. |
 | getPurchaseHistory | | `Promise<Purchase[]>` | Gets an invetory of purchases made by the user regardless of consumption status (where possible) |
 | getAvailablePurchases | | `Promise<Purchase[]>` | Get all purchases made by the user (either non-consumable, or haven't been consumed yet)
 | buySubscription | `string` Subscription ID/sku, `string` Old Subscription ID/sku (on Android), `int` Proration Mode (on Android) | `Promise<Purchase>` | Create (buy) a subscription to a sku. For upgrading/downgrading subscription on Android pass the second parameter with current subscription ID, on iOS this is handled automatically by store. You can also optionally pass in a proration mode integer for upgrading/downgrading subscriptions on Android |
@@ -107,25 +108,25 @@ You should remove this before running `pod install` and follow the manual instal
 1. In XCode, in the project navigator, right-click `Libraries` ➜ `Add Files to [your project's name]`
 2. Go to `node_modules` ➜ `react-native-iap` and add `RNIap.xcodeproj`
 3. In XCode, in the project navigator, select your project. Add `libRNIap.a` to your project's `Build Phases` ➜ `Link Binary With Libraries`
-4. Run your project (`Cmd+R`)<
+4. Run your project (`Cmd+R`)
 
 #### Android
 1. Open up `android/app/src/main/java/[...]/MainApplication.java`
   - Add `import com.dooboolab.RNIap.RNIapPackage;` to the imports at the top of the file
   - Add `new RNIapPackage()` to the list returned by the `getPackages()` method
 2. Append the following lines to `android/settings.gradle`:
-  	```
-  	include ':react-native-iap'
-  	project(':react-native-iap').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-iap/android')
-  	```
+  ```
+  include ':react-native-iap'
+  project(':react-native-iap').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-iap/android')
+  ```
 3. Insert the following lines inside the dependencies block in `android/app/build.gradle`:
-  	```
-      compile project(':react-native-iap')
-  	```
+  ```
+  compile project(':react-native-iap')
+  ```
 4. Add the following to the `<permission>` block in `android/app/src/main/AndroidManifest.xml`:
-    ```
-    <uses-permission android:name="com.android.vending.BILLING" />
-    ```
+  ```
+  <uses-permission android:name="com.android.vending.BILLING" />
+  ```
 
 ## Usage
 You can look in the RNIapExample folder to try the example. Below is basic implementation which is also provided in RNIapExample project.
@@ -190,8 +191,8 @@ componentWillUnmount() {
 ## Purchase
 Once you have called getProducts(), and you have a valid response, you can call buyProduct().
 ```javascript
-  // Will return a purchase object with a receipt which can be used to validate on your server.
-  const purchase = await RNIap.buyProduct('com.example.coins100');
+// Will return a purchase object with a receipt which can be used to validate on your server.
+const purchase = await RNIap.buyProduct('com.example.coins100');
 ```
 
 In RNIapExample, upon receiving a purchase receipt, main page will navigate to Second.js.
@@ -349,11 +350,11 @@ We've like to update this solution as version changes in `react-native-iap`.
 
 #### Can I buy product right away skipping fetching products if I already know productId?
 - You can in `Android` but not in `ios`. In `ios` you should always `fetchProducts` first. You can see more info [here](https://medium.com/ios-development-tips-and-tricks/working-with-ios-in-app-purchases-e4b55491479b).
-- Related issue in #283.
+- Related issue in [#283](https://github.com/dooboolab/react-native-iap/issues/283).
 
 #### How do I validate receipt in ios?
 - Official doc is [here](https://developer.apple.com/library/archive/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateRemotely.html).
-- Resolved issues in #203, #237.
+- Resolved issues in [#203](https://github.com/dooboolab/react-native-iap/issues/203), [#237](https://github.com/dooboolab/react-native-iap/issues/237).
 
 #### How do I validate receipt in android?
 - Offical doc is [here](https://developer.android.com/google/play/billing/billing_library_overview).
@@ -362,7 +363,7 @@ We've like to update this solution as version changes in `react-native-iap`.
 
 #### How do I use react-native-iap in expo?
 - You should detach from `expo` and get `expokit` out of it.
-- Releated issue in #174.
+- Releated issue in [#174](https://github.com/dooboolab/react-native-iap/issues/174).
 
 #### How do I handle promoted products in ios?
 
@@ -406,7 +407,7 @@ We've like to update this solution as version changes in `react-native-iap`.
        iii. Waiting for Review
     4. Enable "In-App Purchase" in Xcode "Capabilities" and in Apple Developer -> "App ID" setting.
 Delete app / Restart device / Quit "store" related processes in Activity Monitor / Xcode Development Provisioning Profile -> Clean -> Build.
-  - Related issues #256, #263.
+  - Related issues [#256](https://github.com/dooboolab/react-native-iap/issues/256) , [#263](https://github.com/dooboolab/react-native-iap/issues/263).
 
 #### Module is not working as expected. Throws error.
 - The `react-native link` script isn't perfect and sometimes broke. Please try `unlinking` and `linking` again. Or try manual installing.
