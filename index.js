@@ -415,8 +415,8 @@ export default {
   getSubscriptions,
   getUserData,
   initConnection,
-  notifyFulfillmentAmazon
+  notifyFulfillmentAmazon,
   prepare,
   validateReceiptAndroid,
-  validateReceiptIos,
+  validateReceiptIos
 };
