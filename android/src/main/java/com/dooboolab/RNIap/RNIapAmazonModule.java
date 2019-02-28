@@ -104,9 +104,13 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void notifyFulfillment(String receiptId, FulfillmentResult result) {
+  public void notifyFulfillment(String receiptId, String result) {
     Log.d(TAG, "Notifying Amazon on fulfillment of " + receiptId + " with result " + result);
-    PurchasingService.notifyFulfillment(receiptId, result);
+    if(result.equalsIgnoreCase("FULFILLED")) {
+      PurchasingService.notifyFulfillment(receiptId, FulfillmentResult.FULFILLED);
+    } else {
+      PurchasingService.notifyFulfillment(receiptId, FulfillmentResult.UNAVAILABLE);
+    }
   }
 
   @ReactMethod

@@ -343,7 +343,7 @@ export const addAdditionalSuccessPurchaseListenerIOS = (e) => {
 /**
  * Notify Amazon IAP fulfillment completed / failed
  * @param {string} receiptId the receiptId sent over to amazon
- * @param {FulfillmentResult} fulfillmentResult Enum value of fulfillment status - (https://s3-us-west-1.amazonaws.com/devportal-reference-docs/iap/API-Reference/com/amazon/device/iap/model/FulfillmentResult.html)
+ * @param {string} fulfillmentResult Enum value of fulfillment status - (https://s3-us-west-1.amazonaws.com/devportal-reference-docs/iap/API-Reference/com/amazon/device/iap/model/FulfillmentResult.html)
  * @returns {null}
  */
 export const notifyFulfillmentAmazon = async(receiptId, fulfillmentResult) => {
@@ -359,7 +359,7 @@ export const checkIsAmazonDevice = async() => {
 
 export const getUserData = async() => {
   console.log('hit getUserData');
-  let userInfo = JSON.parse(await RNIapAmazonModule.getUserData());
+  let userInfo = await RNIapAmazonModule.getUserData();
   console.log('user data returning from index.js of IAP module');
   return userInfo;
 }
