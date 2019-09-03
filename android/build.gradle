@@ -5,13 +5,10 @@ buildscript {
       url 'https://maven.google.com/'
       name 'Google'
     }
-<<<<<<< HEAD
     flatDir {
       dirs 'libs'
     }
-=======
     jcenter()
->>>>>>> e7ef7cc7dc3a7a9abdd44ad5332f286a1a1eeeca
   }
 
   dependencies {
