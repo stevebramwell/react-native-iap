@@ -1,6 +1,6 @@
 {
   "name": "react-native-iap",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "description": "React Native In App Purchase Module.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -38,7 +38,7 @@
   "devDependencies": {
     "@types/eslint": "^6.1.0",
     "@types/react": "16.9.2",
-    "@types/react-native": "0.60.8",
+    "@types/react-native": "0.60.11",
     "babel-eslint": "^10.0.2",
     "eslint": "^6.1.0",
     "eslint-config-standard": "^14.0.0",

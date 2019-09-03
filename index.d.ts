@@ -51,17 +51,21 @@ export interface ProductPurchase {
 export interface PurchaseResult {
   responseCode?: number;
   debugMessage?: string;
+  code?: string;
+  message?: string;
 }
 
 export interface PurchaseError {
   responseCode?: number;
   debugMessage?: string;
+  code?: string;
+  message?: string;
 }
 
 export interface SubscriptionPurchase extends ProductPurchase {
-  autoRenewingAndroid: boolean;
-  originalTransactionDateIOS: string;
-  originalTransactionIdentifierIOS: string;
+  autoRenewingAndroid?: boolean;
+  originalTransactionDateIOS?: string;
+  originalTransactionIdentifierIOS?: string;
 }
 
 export type Purchase = ProductPurchase | SubscriptionPurchase;
