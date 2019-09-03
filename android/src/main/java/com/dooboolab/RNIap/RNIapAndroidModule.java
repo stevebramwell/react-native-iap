@@ -41,8 +41,8 @@ import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-public class RNIapModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener{
-  final String TAG = "RNIapModule";
+public class RNIapAndroidModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener{
+  final String TAG = "RNIapAndroidModule";
 
   private static final String PROMISE_BUY_ITEM = "PROMISE_BUY_ITEM";
 
