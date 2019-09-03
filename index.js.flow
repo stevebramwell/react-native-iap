@@ -1,0 +1,159 @@
+// @flow
+
+declare type Common = {
+  title: string,
+  description: string,
+  price: string,
+  currency: string,
+  localizedPrice: string,
+}
+
+declare type ID = string
+
+export type Product<ID> = Common & {
+  type: "inapp" | "iap",
+  productId: ID,
+}
+
+export type Subscription<ID> = Common & {
+  type: "subs" | "sub",
+  productId: ID,
+
+  introductoryPrice?: string,
+  introductoryPricePaymentModeIOS?: string,
+  introductoryPriceNumberOfPeriods?: number,
+  introductoryPriceSubscriptionPeriod: {},
+
+  subscriptionPeriodNumberIOS?: number,
+  subscriptionPeriodUnitIOS?: string,
+
+  introductoryPriceCyclesAndroid?: number,
+  introductoryPricePeriodAndroid?: string,
+  subscriptionPeriodAndroid?: string,
+  freeTrialPeriodAndroid: string,
+}
+
+export type ProductPurchase = {|
+  productId: string,
+  transactionId?: string,
+  transactionDate: number,
+  transactionReceipt: string,
+  purchaseToken?: string,
+  dataAndroid?: string,
+  signatureAndroid?: string,
+  autoRenewingAndroid?: boolean,
+  isAcknowledgedAndroid?: boolean,
+  purchaseStateAndroid?: number,
+  originalTransactionDateIOS?: string,
+  originalTransactionIdentifierIOS?: string,
+|}
+
+export type PurchaseResult = {
+  responseCode: number,
+  debugMessage: string,
+}
+
+export type PurchaseError = {
+  responseCode: number,
+  debugMessage: string,
+}
+
+export type SubscriptionPurchase = ProductPurchase & {
+  autoRenewingAndroid: boolean,
+  originalTransactionDateIOS: string,
+  originalTransactionIdentifierIOS: string,
+}
+
+export type Purchase = ProductPurchase | SubscriptionPurchase
+
+declare module.exports: {
+  getProducts: (string[]) => Promise<Product<string>[]>,
+  getSubscriptions(string[]): Promise<Subscription<string>[]>,
+  initConnection(): Promise<string>,
+  buydProductWithOffer: (sku: string, forUser: string, withOffer: PaymentDiscount) => Promise<void>,
+  endConnectionAndroid: () => Promise<void>,
+  consumeAllItemsAndroid(): Promise<void>,
+  getPurchaseHistory(): Promise<Purchase[]>,
+  getAvailablePurchases(): Promise<Purchase[]>,
+  buyProduct: string => Promise<ProductPurchase>,
+  requestPurchase(
+    sku: string,
+    andDangerouslyFinishTransactionAutomatically: boolean,
+  ): Promise<string>,
+  buySubscription(
+    sku: string,
+    oldSku?: string,
+    prorationMode?: number,
+  ): Promise<SubscriptionPurchase>,
+  requestSubscription: string => Promise<string>,
+  buyProductWithQuantityIOS(
+    sku: string,
+    quantity: number,
+  ): Promise<ProductPurchase>,
+  requestPurchaseWithQuantityIOS(
+    sku: string,
+    quantity: number,
+  ): Promise<string>,
+  finishTransactionIOS(transactionId: string): void,
+  clearTransactionIOS(): void,
+  clearProductsIOS(): void,
+  acknowledgePurchaseAndroid(token: string, developerPayload?: string): Promise<PurchaseResult>,
+  consumePurchaseAndroid(token: string, developerPayload?: string): Promise<PurchaseResult>,
+  validateReceiptIos(
+    receiptBody: AppleReceiptValidationRequest,
+    isTest: boolean,
+  ): Promise<AppleReceiptValidationResponse | false>,
+  validateReceiptAndroid(
+    packageName: string,
+    productId: string,
+    productToken: string,
+    accessToken: string,
+    isSub: boolean,
+  ): Promise<{} | false>,
+  addAdditionalSuccessPurchaseListenerIOS(
+    fn: (any) => any,
+  ): EmitterSubscription,
+  purchaseUpdatedListener(
+    fn: (ProductPurchase) => any,
+  ): EmitterSubscription,
+  purchaseErrorListener(
+    fn: (PurchaseError) => any,
+  ): EmitterSubscription,
+}
+
+/**
+ * Payment discount interface @see https://developer.apple.com/documentation/storekit/skpaymentdiscount?language=objc
+ */
+declare type PaymentDiscount = {
+  /**
+   * A string used to uniquely identify a discount offer for a product.
+   */
+  identifier: string,
+
+  /**
+   * A string that identifies the key used to generate the signature.
+   */
+  keyIdentifier: string,
+
+  /**
+   * A universally unique ID (UUID) value that you define.
+   */
+  nonce: string,
+
+  /**
+   * A UTF-8 string representing the properties of a specific discount offer, cryptographically signed.
+   */
+  signature: string,
+
+  /**
+   * The date and time of the signature's creation in milliseconds, formatted in Unix epoch time.
+   */
+  timestamp: number,
+}
+
+
+// TODO: the following definitions should be more specific
+
+export type AppleReceiptValidationResponse = any
+export type AppleReceiptValidationRequest = any
+export type EmitterSubscription = any

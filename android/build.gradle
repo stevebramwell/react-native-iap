@@ -1,37 +1,39 @@
 
 buildscript {
   repositories {
-    jcenter()
     maven {
       url 'https://maven.google.com/'
       name 'Google'
     }
+<<<<<<< HEAD
     flatDir {
       dirs 'libs'
     }
+=======
+    jcenter()
+>>>>>>> e7ef7cc7dc3a7a9abdd44ad5332f286a1a1eeeca
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.0.0'
+    classpath 'com.android.tools.build:gradle:3.3.1'
   }
 }
 
 apply plugin: 'com.android.library'
 
-def DEFAULT_COMPILE_SDK_VERSION = 28
-def DEFAULT_BUILD_TOOLS_VERSION = "28.0.2"
-def DEFAULT_MIN_SDK_VERSION = 16
-def DEFAULT_TARGET_SDK_VERSION = 27
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
 
 android {
-  compileSdkVersion rootProject.ext.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
-  buildToolsVersion rootProject.ext.hasProperty('buildToolsVersion') ? rootProject.ext.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
+  compileSdkVersion safeExtGet("compileSdkVersion", 28)
+  buildToolsVersion safeExtGet("buildToolsVersion", '28.0.2')
 
   defaultConfig {
-    minSdkVersion rootProject.ext.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : DEFAULT_MIN_SDK_VERSION
-    targetSdkVersion rootProject.ext.hasProperty('targetSdkVersion') ? rootProject.ext.targetSdkVersion : DEFAULT_TARGET_SDK_VERSION
-    versionCode 1
-    versionName "1.0"
+    minSdkVersion safeExtGet('minSdkVersion', 16)
+    targetSdkVersion safeExtGet('targetSdkVersion', 28)
+    versionCode 3
+    versionName "3.0.0"
   }
   lintOptions {
     abortOnError false
@@ -48,7 +50,7 @@ repositories {
 }
 
 dependencies {
-  compile( 'com.facebook.react:react-native:+' )
-  compile( 'com.android.billingclient:billing:1.1' )
+  implementation 'com.facebook.react:react-native:+'
+  implementation 'com.android.billingclient:billing:2.0.1'
   compile fileTree(dir: 'dep', include: ['*.jar'])
 }

@@ -3,44 +3,59 @@ import { EmitterSubscription } from 'react-native';
 import * as Apple from './apple'
 
 interface Common {
-  title: string
-  description: string
-  price: string
-  currency: string
-  localizedPrice: string
+  title: string;
+  description: string;
+  price: string;
+  currency: string;
+  localizedPrice: string;
 }
 
 export interface Product<ID extends string> extends Common {
-  type: 'inapp' | 'iap'
-  productId: ID
+  type: 'inapp' | 'iap';
+  productId: ID;
 }
 
 export interface Subscription<ID extends string> extends Common {
-  type: 'subs' | 'sub'
-  productId: ID
+  type: 'subs' | 'sub';
+  productId: ID;
 
-  introductoryPrice?: string
-  introductoryPricePaymentModeIOS?: string
-  introductoryPriceNumberOfPeriods?: number
-  introductoryPriceSubscriptionPeriod: object
+  introductoryPrice?: string;
+  introductoryPricePaymentModeIOS?: string;
+  introductoryPriceNumberOfPeriodsIOS?: string;
+  introductoryPriceSubscriptionPeriodIOS?: string;
 
-  subscriptionPeriodNumberIOS?: string
-  subscriptionPeriodUnitIOS?: number
+  subscriptionPeriodNumberIOS?: string;
+  subscriptionPeriodUnitIOS?: string;
 
-  introductoryPriceCyclesAndroid?: number
-  introductoryPricePeriodAndroid?: string
-  subscriptionPeriodAndroid?: string
-  freeTrialPeriodAndroid: string
+  introductoryPriceCyclesAndroid?: string;
+  introductoryPricePeriodAndroid?: string;
+  subscriptionPeriodAndroid?: string;
+  freeTrialPeriodAndroid?: string;
 }
 
 export interface ProductPurchase {
   productId: string;
-  transactionId: string;
-  transactionDate: string;
+  transactionId?: string;
+  transactionDate: number;
   transactionReceipt: string;
-  signatureAndroid?: string;
-  dataAndroid?: string;
   purchaseToken?: string;
+  dataAndroid?: string;
+  signatureAndroid?: string;
+  autoRenewingAndroid?: boolean;
+  isAcknowledgedAndroid?: boolean;
+  purchaseStateAndroid?: number;
+  originalTransactionDateIOS?: string;
+  originalTransactionIdentifierIOS?: string;
+}
+
+export interface PurchaseResult {
+  responseCode?: number;
+  debugMessage?: string;
+}
+
+export interface PurchaseError {
+  responseCode?: number;
+  debugMessage?: string;
 }
 
 export interface SubscriptionPurchase extends ProductPurchase {
@@ -49,13 +64,7 @@ export interface SubscriptionPurchase extends ProductPurchase {
   originalTransactionIdentifierIOS: string;
 }
 
-export type Purchase = ProductPurchase | SubscriptionPurchase
-
-/**
- * @deprecated Deprecated since 2.0.0. Prepare module for purchase flow. Required on Android. No-op on iOS.
- * @returns {Promise<string>}
- */
-export function prepare() : Promise<string>;
+export type Purchase = ProductPurchase | SubscriptionPurchase;
 
 /**
  * Init module for purchase flow. Required on Android. In ios it will check wheter user canMakePayment.
@@ -67,13 +76,13 @@ export function initConnection() : Promise<string>;
  * End billing client. Will enchance android app's performance by releasing service. No-op on iOS.
  * @returns {Promise<void>}
  */
-export function endConnection() : Promise<void>;
+export function endConnectionAndroid() : Promise<void>;
 
 /**
  * Consume all items in android. No-op in iOS.
  * @returns {Promise<void>}
  */
-export function consumeAllItems() : Promise<void>;
+export function consumeAllItemsAndroid() : Promise<void>;
 
 /**
  * Get a list of products (consumable and non-consumable items, but not subscriptions)
@@ -112,7 +121,27 @@ export function getPurchaseHistory() : Promise<Purchase[]>;
 export function getAvailablePurchases() : Promise<Purchase[]>;
 
 /**
+ * Buy a product
+ * 
+ * @deprecated
+ * @param {string} sku The product's sku/ID
+ * @returns {Promise<Purchase>}
+ */
+export function buyProduct(sku: string) : Promise<ProductPurchase>;
+
+/**
+ * Request a purchase
+ * 
+ * @param {string} sku The product's sku/ID
+ * @param {boolean} andDangerouslyFinishTransactionAutomatically You should set this to false and call finishTransaction manually when you have delivered the purchased goods to the user. It defaults to true to provide backwards compatibility. Will default to false in version 4.0.0.
+ * @returns {Promise<string>}
+ */
+export function requestPurchase(sku: string, andDangerouslyFinishTransactionAutomatically?: boolean) : Promise<string>;
+
+/**
  * Create a subscription to a sku
+ * 
+ * @deprecated
  * @param {string} sku The product's sku/ID
  * @param {string} [oldSku] Optional old product's ID for upgrade/downgrade (Android only)
  * @param {number} [prorationMode] Optional proration mode for upgrade/downgrade (Android only)
@@ -121,11 +150,25 @@ export function getAvailablePurchases() : Promise<Purchase[]>;
 export function buySubscription(sku: string, oldSku?: string, prorationMode?: number) : Promise<SubscriptionPurchase>;
 
 /**
- * Buy a product
+ * Request a subscription to a sku
+ * 
  * @param {string} sku The product's sku/ID
- * @returns {Promise<Purchase>}
+ * @param {string} [oldSku] Optional old product's ID for upgrade/downgrade (Android only)
+ * @param {number} [prorationMode] Optional proration mode for upgrade/downgrade (Android only)
+ * @returns {Promise<string>}
  */
-export function buyProduct(sku: string) : Promise<ProductPurchase>;
+export function requestSubscription(sku: string, oldSku?: string, prorationMode?: number) : Promise<string>;
+
+/**
+ * Buy a product with offer
+ *
+ * @param {string} sku The product unique identifier
+ * @param {string} forUser An user identifier on your service (username or user id)
+ * @param {Apple.PaymentDiscount} withOffer The offer information
+ *
+ * @returns {Promise<void>}
+ */
+export function buyProductWithOfferIOS(sku: string, forUser: string, withOffer: Apple.PaymentDiscount) : Promise<void>;
 
 /**
  * Buy a product with a specified quantity (iOS only)
@@ -136,11 +179,23 @@ export function buyProduct(sku: string) : Promise<ProductPurchase>;
 export function buyProductWithQuantityIOS(sku: string, quantity: number) : Promise<ProductPurchase>;
 
 /**
- * Buy a product without finish transanction to sync with IOS purchasing consumables. Make sure to call finishTransanction when you are done with it or the purchase may not be transferred. Also, note that this method is not changed from buyProduct in android.
+ * Request a purchase with specified quantity (iOS only)
+ * 
  * @param {string} sku The product's sku/ID
+ * @param {number} quantity The amount of product to buy
  * @returns {Promise<Purchase>}
  */
-export function buyProductWithoutFinishTransaction(sku: string) : Promise<ProductPurchase>;
+export function requestPurchaseWithQuantityIOS(sku: string, quantity: number) : Promise<string>;
+
+/**
+ * Finish Transaction (iOS only)
+ *   Similar to `consumePurchaseAndroid`. Tells StoreKit that you have delivered the purchase to the user and StoreKit can now let go of the transaction.
+ *   Call this after you have persisted the purchased state to your server or local data in your app.
+ *   `react-native-iap` will continue to deliver the purchase updated events with the successful purchase until you finish the transaction. **Even after the app has relaunched.**
+ * @param {string} transactionId The transactionId of the function that you would like to finish.
+ * @returns {null}
+ */
+export function finishTransactionIOS(transactionId: string): void;
 
 /**
  * Clear Transaction (iOS only)
@@ -148,27 +203,30 @@ export function buyProductWithoutFinishTransaction(sku: string) : Promise<Produc
  *     link : https://github.com/dooboolab/react-native-iap/issues/257
  * @returns void
  */
-export function clearTransaction(): void;
+export function clearTransactionIOS(): void;
 
 /**
  * Clear valid Products (iOS only)
  *   Remove all products which are validated by Apple server.
  * @returns {null}
  */
-export function clearProducts(): void;
+export function clearProductsIOS(): void;
 
 /**
- * Send finishTransaction call to Apple IAP server. Call this function after receipt validation process.
- * @returns void
- */
-export function finishTransaction(): void;
-
-/**
- * Consume a product (on Android.) No-op on iOS.
+ * Acknowledge a purchase (on Android.) No-op on iOS.
+ * This is applied to non-consumable or subscriptions.
  * @param {string} token The product's token (on Android)
  * @returns {Promise}
  */
-export function consumePurchase(token: string) : Promise<void>;
+export function acknowledgePurchaseAndroid(token: string, developerPayload?: string) : Promise<PurchaseResult>;
+
+/**
+ * Consume a purchase (on Android.) No-op on iOS.
+ * It acknowledges consumable products. If it isn't consumable, use `acknowledgePurchaseAndroid` instead.
+ * @param {string} token The product's token (on Android)
+ * @returns {Promise}
+ */
+export function consumePurchaseAndroid(token: string, developerPayload?: string) : Promise<PurchaseResult>;
 
 /**
  * Validate receipt for iOS.
@@ -188,7 +246,33 @@ export function validateReceiptIos(receiptBody: Apple.ReceiptValidationRequest, 
 export function validateReceiptAndroid(packageName: string, productId: string, productToken: string, accessToken: string, isSub: boolean): Promise<object | false>;
 
 /**
-  * Add IAP purchase event in ios.
+ * Add IAP purchase event in ios.
+ * @deprecated
  * @returns {callback(e: Event)}
  */
 export function addAdditionalSuccessPurchaseListenerIOS(fn: Function) : EmitterSubscription;
+
+/**
+ * Subscribe a listener when purchase is updated.
+ * @returns {callback(e: ProductPurchase)}
+ */
+export function purchaseUpdatedListener(fn: Function) : EmitterSubscription;
+
+/**
+ * Subscribe a listener when purchase got error.
+ * @returns {callback(e: PurchaseError)}
+ */
+export function purchaseErrorListener(fn: Function) : EmitterSubscription;
+
+/**
+ * Request current receipt base64 encoded (IOS only)
+ * @returns {Promise<string>}
+ */
+export function requestReceiptIOS(): Promise<string>;
+
+/**
+ * Request all the pending transactions (IOS only)
+ * @returns {Promise<ProductPurchase[]>}
+ */
+export function getPendingPurchasesIOS(): Promise<ProductPurchase[]>;
+

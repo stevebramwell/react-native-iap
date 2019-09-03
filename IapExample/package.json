@@ -1,0 +1,35 @@
+{
+  "name": "IapExample",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest",
+    "start:packager": "node_modules/react-native/packager/packager.sh",
+    "start:reset": "node node_modules/react-native/local-cli/cli.js start --reset-cache",
+    "android": "node node_modules/react-native/local-cli/cli.js run-android",
+    "android:shake": "adb shell input keyevent 82",
+    "android:release": "node node_modules/react-native/local-cli/cli.js run-android --variant=release",
+    "ios": "node node_modules/react-native/local-cli/cli.js run-ios",
+    "jest": "jest",
+    "build:ios": "react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios",
+    "build:android": "react-native bundle --entry-file index.js --platform android --dev false --bundle-output android/main.jsbundle --assets-dest android"
+  },
+  "dependencies": {
+    "apsl-react-native-button": "^3.1.1",
+    "react": "16.8.6",
+    "react-native": "0.60.3",
+    "react-native-gesture-handler": "git://github.com/hyochan/react-native-gesture-handler.git#package-names",
+    "react-native-iap": "file:../",
+    "react-navigation": "^3.11.1"
+  },
+  "devDependencies": {
+    "babel-jest": "^24.8.0",
+    "jest": "^24.8.0",
+    "metro-react-native-babel-preset": "^0.55.0",
+    "react-test-renderer": "16.8.6"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}

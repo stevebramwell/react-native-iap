@@ -6,6 +6,8 @@
 # node.js
 #
 node_modules/
+package-lock.json
+IapExample/package-lock.json
 npm-debug.log
 yarn-error.log
 
@@ -37,8 +39,15 @@ build/
 .gradle
 local.properties
 *.iml
+IapExample/android/app/bin
+IapExample/android/app/.project
+IapExample/android/.project
+android/.project
 
 # BUCK
 buck-out/
 \.buckd/
 *.keystore
+
+# CocoaPods
+IapExample/ios/Pods
