@@ -80,11 +80,6 @@ public class RNIapAndroidModule extends ReactContextBaseJavaModule implements Pu
     reactContext.addLifecycleEventListener(lifecycleEventListener);
   }
 
-  @Override
-  public String getName() {
-    return "RNIapModule";
-  }
-
   private void ensureConnection (final Promise promise, final Runnable callback) {
     if (billingClient != null && billingClient.isReady()) {
       callback.run();
