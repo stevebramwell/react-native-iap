@@ -604,7 +604,7 @@ export default {
   acknowledgePurchaseAndroid,
   addAdditionalSuccessPurchaseListenerIOS,
   buyProduct,
-  buyProductWithoutFinishTransaction,
+  //buyProductWithoutFinishTransaction,
   buyProductWithQuantityIOS,
   buySubscription,
   clearProductsIOS,
