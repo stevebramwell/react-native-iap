@@ -11,7 +11,7 @@ const IOS_ITEM_TYPE_IAP = 'iap';
 export const PROMOTED_PRODUCT = 'iap-promoted-product';
 
 function checkNativeAndroidAvailable() {
-  if (!RNIapModule) {
+  if (!RNIapAndroidModule) {
     return Promise.reject(new Error('E_IAP_NOT_AVAILABLE', 'The payment setup is not available in this version of the app. Contact admin.'));
   }
 };
@@ -33,10 +33,10 @@ export const initConnection = () => Platform.select({
     return RNIapIos.canMakePayments();
   },
   android: async() => {
-    if (!RNIapModule) {
+    if (!RNIapAndroidModule) {
       return Promise.resolve();
     }
-    return RNIapModule.initConnection();
+    return RNIapAndroidModule.initConnection();
   },
 })();
 
@@ -51,10 +51,10 @@ export const endConnectionAndroid = () => Platform.select({
     if(isAmazonDevice) {
       Promise.resolve();
     } else {
-      if (!RNIapModule) {
+      if (!RNIapAndroidModule) {
         return Promise.resolve();
       }
-      return RNIapModule.endConnection();
+      return RNIapAndroidModule.endConnection();
     }
   } 
 })();
@@ -71,7 +71,7 @@ export const consumeAllItemsAndroid = () => Platform.select({
       Promise.resolve();
     } else {
       checkNativeAndroidAvailable();
-      return RNIapModule.refreshItems();
+      return RNIapAndroidModule.refreshItems();
     }
   }
 })();
@@ -94,10 +94,10 @@ export const getProducts = (skus) => Platform.select({
     if(isAmazonDevice) {
       return RNIapAmazonModule.getProductData(skus);
     } else {
-      if (!RNIapModule) {
+      if (!RNIapAndroidModule) {
         return [];
       }
-      return RNIapModule.getItemsByType(ANDROID_ITEM_TYPE_IAP, skus);
+      return RNIapAndroidModule.getItemsByType(ANDROID_ITEM_TYPE_IAP, skus);
     }
     
   },
@@ -120,7 +120,7 @@ export const getSubscriptions = (skus) => Platform.select({
       return RNIapAmazonModule.getProductData(skus);
     } else {
       checkNativeAndroidAvailable();
-      return RNIapModule.getItemsByType(ANDROID_ITEM_TYPE_SUBSCRIPTION, skus);
+      return RNIapAndroidModule.getItemsByType(ANDROID_ITEM_TYPE_SUBSCRIPTION, skus);
     }    
   },
 })();
@@ -140,8 +140,8 @@ export const getPurchaseHistory = () => Platform.select({
       return RNIapAmazonModule.getPurchaseUpdates(true);
     } else {
       checkNativeAndroidAvailable();
-      const products = await RNIapModule.getPurchaseHistoryByType(ANDROID_ITEM_TYPE_IAP);
-      const subscriptions = await RNIapModule.getPurchaseHistoryByType(ANDROID_ITEM_TYPE_SUBSCRIPTION);
+      const products = await RNIapAndroidModule.getPurchaseHistoryByType(ANDROID_ITEM_TYPE_IAP);
+      const subscriptions = await RNIapAndroidModule.getPurchaseHistoryByType(ANDROID_ITEM_TYPE_SUBSCRIPTION);
       return products.concat(subscriptions);
     }    
   },
@@ -162,8 +162,8 @@ export const getAvailablePurchases = () => Platform.select({
       return RNIapAmazonModule.getPurchaseUpdates(true);
     } else {
       checkNativeAndroidAvailable();
-      const products = await RNIapModule.getAvailableItemsByType(ANDROID_ITEM_TYPE_IAP);
-      const subscriptions = await RNIapModule.getAvailableItemsByType(ANDROID_ITEM_TYPE_SUBSCRIPTION);
+      const products = await RNIapAndroidModule.getAvailableItemsByType(ANDROID_ITEM_TYPE_IAP);
+      const subscriptions = await RNIapAndroidModule.getAvailableItemsByType(ANDROID_ITEM_TYPE_SUBSCRIPTION);
       return products.concat(subscriptions);
     }
   },
@@ -184,7 +184,7 @@ export const buyProduct = (sku) => {
     },
     android: async() => {
       checkNativeAndroidAvailable();
-      return RNIapModule.buyItemByType(ANDROID_ITEM_TYPE_IAP, sku, null, 0);
+      return RNIapAndroidModule.buyItemByType(ANDROID_ITEM_TYPE_IAP, sku, null, 0);
     },
   })();
 };
@@ -206,7 +206,7 @@ export const requestPurchase = (sku, andDangerouslyFinishTransactionAutomaticall
   },
   android: async() => {
     checkNativeAndroidAvailable();
-    return RNIapModule.buyItemByType(ANDROID_ITEM_TYPE_IAP, sku, null, 0);
+    return RNIapAndroidModule.buyItemByType(ANDROID_ITEM_TYPE_IAP, sku, null, 0);
   },
 })();
 
@@ -232,7 +232,7 @@ export const buySubscription = (sku, oldSku, prorationMode) => {
       } else {
         checkNativeAndroidAvailable();
         if (!prorationMode) prorationMode = -1;
-        return RNIapModule.buyItemByType(ANDROID_ITEM_TYPE_SUBSCRIPTION, sku, oldSku, prorationMode);
+        return RNIapAndroidModule.buyItemByType(ANDROID_ITEM_TYPE_SUBSCRIPTION, sku, oldSku, prorationMode);
       }
     },
   })();
@@ -255,7 +255,7 @@ export const requestSubscription = (sku, oldSku, prorationMode) => Platform.sele
     } else {
       checkNativeAndroidAvailable();
       if (!prorationMode) prorationMode = -1;
-      return RNIapModule.buyItemByType(ANDROID_ITEM_TYPE_SUBSCRIPTION, sku, oldSku, prorationMode);
+      return RNIapAndroidModule.buyItemByType(ANDROID_ITEM_TYPE_SUBSCRIPTION, sku, oldSku, prorationMode);
     } 
   },
 })();
@@ -355,7 +355,7 @@ export const acknowledgePurchaseAndroid = (token, developerPayload) => Platform.
   ios: async() => Promise.resolve(),
   android: async() => {
     checkNativeAndroidAvailable();
-    return RNIapModule.acknowledgePurchase(token, developerPayload);
+    return RNIapAndroidModule.acknowledgePurchase(token, developerPayload);
   },
 })();
 
@@ -371,7 +371,7 @@ export const consumePurchaseAndroid = (token, developerPayload) => Platform.sele
       Promise.resolve();
     } else {
       checkNativeAndroidAvailable();
-      return RNIapModule.consumeProduct(token, developerPayload);
+      return RNIapAndroidModule.consumeProduct(token, developerPayload);
     }    
   },
 })();
@@ -525,7 +525,7 @@ export const purchaseUpdatedListener = (e) => {
     return myModuleEvt.addListener('purchase-updated', e);
   } else {
     const emitterSubscription = DeviceEventEmitter.addListener('purchase-updated', e);
-    RNIapModule.startListening();
+    RNIapAndroidModule.startListening();
     return emitterSubscription;
   }
 };
