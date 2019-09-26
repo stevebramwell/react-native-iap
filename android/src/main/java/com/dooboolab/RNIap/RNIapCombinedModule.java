@@ -40,7 +40,7 @@ public class RNIapCombinedModule extends ReactContextBaseJavaModule {
   
   public RNIapCombinedModule (ReactApplicationContext reactContext) {
     super(reactContext);
-    System.out.println('Is amazon device: ' + getReactApplicationContext().getPackageManager().hasSystemFeature(AMAZON_DEVICE_IDENTIFIER));
+    System.out.println("Is amazon device: " + getReactApplicationContext().getPackageManager().hasSystemFeature(AMAZON_DEVICE_IDENTIFIER));
     isAmazonDevice = getReactApplicationContext().getPackageManager().hasSystemFeature(AMAZON_DEVICE_IDENTIFIER);
     
   }
