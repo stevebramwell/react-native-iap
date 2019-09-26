@@ -505,6 +505,7 @@ export const notifyFulfillmentAmazon = async(receiptId, fulfillmentResult) => {
 // Function used to differentiate amazon / android devices
 export const checkIsAmazonDevice = async() => {
   let isAmazonDevice = await RNIapCombinedModule.isAmazonDevice();
+  console.log('isAmazondevice: ', isAmazonDevice);
   return isAmazonDevice;
 }
 
