@@ -250,7 +250,7 @@ export const requestSubscription = (sku, oldSku, prorationMode) => Platform.sele
   },
   android: async() => {
     let isAmazonDevice = checkIsAmazonDevice();
-    if(isAmazonDevice) {
+    if(!isAmazonDevice) {
       return RNIapAmazonModule.purchase(sku);
     } else {
       checkNativeAndroidAvailable();
