@@ -226,6 +226,7 @@ export const buySubscription = (sku, oldSku, prorationMode) => {
       return RNIapIos.buyProduct(sku, true);
     },
     android: async() => {
+      console.log('hit buySubscription');
       let isAmazonDevice = checkIsAmazonDevice();
       if(isAmazonDevice) {
         return RNIapAmazonModule.purchase(sku);
@@ -249,8 +250,10 @@ export const requestSubscription = (sku, oldSku, prorationMode) => Platform.sele
     return RNIapIos.buyProduct(sku, true);
   },
   android: async() => {
+    console.log('requesting subscription');
     let isAmazonDevice = checkIsAmazonDevice();
-    if(!isAmazonDevice) {
+    console.log('is amazon device: ', isAmazonDevice);
+    if(isAmazonDevice) {
       return RNIapAmazonModule.purchase(sku);
     } else {
       checkNativeAndroidAvailable();
@@ -289,6 +292,7 @@ export const requestPurchaseWithQuantityIOS = (sku, quantity) => Platform.select
     return RNIapIos.buyProductWithQuantityIOS(sku, quantity);
   },
   android: async() => {
+    console.log('hit ios');
     let isAmazonDevice = checkIsAmazonDevice();
     if(isAmazonDevice) {
       return RNIapAmazonModule.purchase(sku);
