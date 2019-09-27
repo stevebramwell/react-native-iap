@@ -116,7 +116,7 @@ export const getSubscriptions = (skus) => Platform.select({
   },
   android: async() => {
     let isAmazonDevice = checkIsAmazonDevice();
-    if(isAmazonDevice) {
+    if(false) {
       return RNIapAmazonModule.getProductData(skus);
     } else {
       checkNativeAndroidAvailable();
