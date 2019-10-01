@@ -47,7 +47,7 @@ export const initConnection = () => Platform.select({
 export const endConnectionAndroid = () => Platform.select({
   ios: async() => Promise.resolve(),
   android: async() => {
-    let isAmazonDevice = checkIsAmazonDevice();
+    let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
       Promise.resolve();
     } else {
@@ -66,7 +66,7 @@ export const endConnectionAndroid = () => Platform.select({
 export const consumeAllItemsAndroid = () => Platform.select({
   ios: async() => Promise.resolve(),
   android: async() => {
-    let isAmazonDevice = checkIsAmazonDevice();
+    let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
       Promise.resolve();
     } else {
@@ -90,7 +90,7 @@ export const getProducts = (skus) => Platform.select({
       .then((items) => items.filter((item) => item.productId));
   },
   android: async() => {
-    let isAmazonDevice = checkIsAmazonDevice();
+    let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
       return RNIapAmazonModule.getProductData(skus);
     } else {
@@ -115,8 +115,8 @@ export const getSubscriptions = (skus) => Platform.select({
       .then((items) => items.filter((item) => skus.includes(item.productId)));
   },
   android: async() => {
-    let isAmazonDevice = checkIsAmazonDevice();
-    if(false) {
+    let isAmazonDevice = await checkIsAmazonDevice();
+    if(isAmazonDevice) {
       return RNIapAmazonModule.getProductData(skus);
     } else {
       checkNativeAndroidAvailable();
@@ -135,7 +135,7 @@ export const getPurchaseHistory = () => Platform.select({
     return RNIapIos.getAvailableItems();
   },
   android: async() => {
-    let isAmazonDevice = checkIsAmazonDevice();
+    let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
       return RNIapAmazonModule.getPurchaseUpdates(true);
     } else {
@@ -157,7 +157,7 @@ export const getAvailablePurchases = () => Platform.select({
     return RNIapIos.getAvailableItems();
   },
   android: async() => {
-    let isAmazonDevice = checkIsAmazonDevice();
+    let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
       return RNIapAmazonModule.getPurchaseUpdates(true);
     } else {
@@ -227,7 +227,7 @@ export const buySubscription = (sku, oldSku, prorationMode) => {
     },
     android: async() => {
       console.log('hit buySubscription');
-      let isAmazonDevice = checkIsAmazonDevice();
+      let isAmazonDevice = await checkIsAmazonDevice();
       if(isAmazonDevice) {
         return RNIapAmazonModule.purchase(sku);
       } else {
@@ -251,9 +251,9 @@ export const requestSubscription = (sku, oldSku, prorationMode) => Platform.sele
   },
   android: async() => {
     console.log('requesting subscription');
-    let isAmazonDevice = checkIsAmazonDevice();
+    let isAmazonDevice = await checkIsAmazonDevice();
     console.log('is amazon device: ', isAmazonDevice);
-    if(false) {
+    if(isAmazonDevice) {
       return RNIapAmazonModule.purchase(sku);
     } else {
       checkNativeAndroidAvailable();
@@ -293,7 +293,7 @@ export const requestPurchaseWithQuantityIOS = (sku, quantity) => Platform.select
   },
   android: async() => {
     console.log('hit ios');
-    let isAmazonDevice = checkIsAmazonDevice();
+    let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
       return RNIapAmazonModule.purchase(sku);
     } else {
