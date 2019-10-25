@@ -300,6 +300,7 @@ public class RNIapAndroidModule extends ReactContextBaseJavaModule implements Pu
             item.putString("developerPayloadAndroid", purchase.getDeveloperPayload());
             item.putString("signatureAndroid", purchase.getSignature());
             item.putInt("purchaseStateAndroid", purchase.getPurchaseState());
+            item.putBoolean("isAcknowledged", purchase.isAcknowledged());
 
             if (type.equals(BillingClient.SkuType.SUBS)) {
               item.putBoolean("autoRenewingAndroid", purchase.isAutoRenewing());
