@@ -159,7 +159,7 @@ export const getAvailablePurchases = () => Platform.select({
   android: async() => {
     let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
-      return RNIapAmazonModule.getPurchaseUpdates(true);
+      return RNIapAmazonModule.getPurchaseUpdates(false);
     } else {
       checkNativeAndroidAvailable();
       const products = await RNIapAndroidModule.getAvailableItemsByType(ANDROID_ITEM_TYPE_IAP);
@@ -371,6 +371,7 @@ export const acknowledgePurchaseAndroid = (token, developerPayload) => Platform.
 export const consumePurchaseAndroid = (token, developerPayload) => Platform.select({
   ios: async() => Promise.resolve(),
   android: async() => {
+    let isAmazonDevice = await checkIsAmazonDevice();
     if(isAmazonDevice) {
       Promise.resolve();
     } else {

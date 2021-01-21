@@ -210,6 +210,18 @@ public class RNIapAmazonModule extends ReactContextBaseJavaModule {
         case FAILED: 
           rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE", null, null);
           break;
+        case INVALID_SKU:
+          rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE - INVALID SKU", null, null);
+          break;
+        case ALREADY_PURCHASED:
+          rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE - ALREADY PURCHASED", null, null);
+          break;
+        case NOT_SUPPORTED:
+          rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE - NOT SUPPORTED", null, null);
+          break;
+        default:
+          rejectPromises(PURCHASE_ITEM, "PURCHASE ITEM FAILURE - UNKNOWN FAILURE", null, null);
+          break;
       }
     }
 
